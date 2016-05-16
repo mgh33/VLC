@@ -9,7 +9,7 @@
     <application
         android:name="org.videolan.vlc.VLCApplication" >
         <activity
-            android:name="org.videolan.vlc.StartActivity"
+            android:name="com.mgh.vlc.StartActivity"
             tools:node="replace">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

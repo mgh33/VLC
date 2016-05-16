@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@android:id/tabcontent"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
@@ -53,5 +54,29 @@
         android:layout_width="match_parent"
         android:layout_height="9dp"
         android:layout_below="@+id/sliding_tabs" />
+
+    <android.support.design.widget.FloatingActionButton
+        app:rippleColor="@color/orange50"
+        android:id="@+id/albums_song_play_rand"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:src="@drawable/ic_fab_shuffle"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:tint="@color/grey50"/>
+    <android.support.design.widget.FloatingActionButton
+        app:rippleColor="@color/orange50"
+        android:id="@+id/albums_song_play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toStartOf="@id/albums_song_play_rand"
+        android:layout_alignParentBottom="true"
+        android:src="@drawable/ic_fab_play"
+        android:layout_margin="16dp"
+        android:tint="@color/grey50"/>
+
+
 </RelativeLayout>
 

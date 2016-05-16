@@ -77,6 +77,7 @@ import org.videolan.vlc.util.WeakHandler;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -100,6 +101,7 @@ public class AudioBrowserFragment extends MediaBrowserFragment implements SwipeR
     private TextView mEmptyView;
     private List<View> mLists;
     private FloatingActionButton mFabPlayShuffleAll;
+    private FloatingActionButton mFabPlayAll;
 
     public static final int REFRESH = 101;
     public static final int UPDATE_LIST = 102;
@@ -197,7 +199,14 @@ public class AudioBrowserFragment extends MediaBrowserFragment implements SwipeR
         mFabPlayShuffleAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onFabPlayAllClick(v);
+                onFabPlayAllClick(v, true);
+            }
+        });
+        mFabPlayAll = (FloatingActionButton)v.findViewById(R.id.fab_play_all);
+        mFabPlayAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onFabPlayAllClick(v, false);
             }
         });
         setFabPlayShuffleAllVisibility();
@@ -561,24 +570,51 @@ public class AudioBrowserFragment extends MediaBrowserFragment implements SwipeR
             return false;
     }
 
-    public void onFabPlayAllClick(View view) {
-        List<MediaWrapper> medias = new ArrayList<MediaWrapper>();
-        mSongsAdapter.getListWithPosition(medias, 0);
+    public void onFabPlayAllClick(View view, boolean shuffle) {
+        List<MediaWrapper> medias = new LinkedList<MediaWrapper>();
+        AudioBrowserListAdapter adapter;
+        if (mViewPager.getCurrentItem() == MODE_SONG) {
+            adapter = mSongsAdapter;
+        }else if (mViewPager.getCurrentItem() == MODE_ALBUM) {
+            adapter = mArtistsAdapter;
+        }else if (mViewPager.getCurrentItem() == MODE_ARTIST) {
+            adapter = mArtistsAdapter;
+        }else if (mViewPager.getCurrentItem() == MODE_GENRE) {
+            adapter = mGenresAdapter;
+        }else if (mViewPager.getCurrentItem() == MODE_PLAYLIST) {
+            adapter = mPlaylistAdapter;
+        }else{
+            return;
+        }
+
+        adapter.getListWithPosition(medias, 0);
         if (mSongsAdapter.getCount() > 0) {
-            Random rand = new Random();
-            int randomSong = rand.nextInt(mSongsAdapter.getCount());
+            //Random rand = new Random();
+            //int randomSong = rand.nextInt(mSongsAdapter.getCount());
             if (mService != null) {
-                mService.load(medias, randomSong);
-                mService.shuffle();
+                //mService.load(medias, randomSong);
+                if (shuffle)
+                    mService.shuffleAndLoad(medias);
+                else
+                    mService.load(medias, 0);
+                //mService.shuffle();
+                mService.play();
             }
         }
     }
 
     public void setFabPlayShuffleAllVisibility() {
-        if (mViewPager.getCurrentItem() == MODE_SONG)
-            mFabPlayShuffleAll.setVisibility(View.VISIBLE);
-        else
-            mFabPlayShuffleAll.setVisibility(View.GONE);
+//        if (mViewPager.getCurrentItem() == MODE_SONG ||
+//                mViewPager.getCurrentItem() == MODE_ARTIST ||
+//                mViewPager.getCurrentItem() == MODE_ALBUM) {
+//            mFabPlayShuffleAll.setVisibility(View.VISIBLE);
+//            mFabPlayAll.setVisibility(View.VISIBLE);
+//        }else {
+//            mFabPlayShuffleAll.setVisibility(View.GONE);
+//            mFabPlayAll.setVisibility(View.GONE);
+//        }
+        mFabPlayShuffleAll.setVisibility(View.VISIBLE);
+        mFabPlayAll.setVisibility(View.VISIBLE);
     }
 
     @Override

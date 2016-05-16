@@ -99,6 +99,7 @@ public class AudioAlbumFragment extends PlaybackServiceFragment implements Adapt
         View v = inflater.inflate(R.layout.audio_album, container, false);
 
         v.findViewById(R.id.album_play).setOnClickListener(this);
+        v.findViewById(R.id.album_play_rand).setOnClickListener(this);
         ListView songsList = (ListView) v.findViewById(R.id.songs);
         songsList.setAdapter(mAdapter);
         songsList.setOnItemClickListener(this);
@@ -274,6 +275,10 @@ public class AudioAlbumFragment extends PlaybackServiceFragment implements Adapt
             case R.id.album_play:
                 if (mService != null)
                     mService.load(mMediaList, 0);
+                break;
+            case R.id.album_play_rand:
+                if (mService != null)
+                    mService.shuffleAndLoad(mMediaList);
                 break;
             default:
                 break;

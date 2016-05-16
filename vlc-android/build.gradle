@@ -28,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "org.videolan.vlc"
+        applicationId "com.mgh.vlc"
 
         resValue "string", "build_time", buildTime()
         resValue "string", "build_host", hostName()
@@ -98,7 +98,7 @@ android {
             proguardFile 'proguard.cfg'
         }
         debug {
-            applicationIdSuffix ".debug"
+            //applicationIdSuffix ".debug"
             jniDebuggable true
         }
     }

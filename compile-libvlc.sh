@@ -284,7 +284,7 @@ fi
 GCCVER=4.9
 REL=$(grep -o '^Pkg.Revision.*[0-9]*.*' $ANDROID_NDK/source.properties |cut -d " " -f 3 | cut -d "." -f 1)
 case "$REL" in
-    11*)
+    12*)
         if [ "${HAVE_64}" = 1 ];then
             ANDROID_API=android-21
         else

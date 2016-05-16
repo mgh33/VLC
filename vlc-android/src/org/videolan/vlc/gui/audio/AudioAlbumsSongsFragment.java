@@ -27,6 +27,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
@@ -69,6 +70,7 @@ import org.videolan.vlc.util.FileUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 public class AudioAlbumsSongsFragment extends PlaybackServiceFragment implements SwipeRefreshLayout.OnRefreshListener {
@@ -90,6 +92,9 @@ public class AudioAlbumsSongsFragment extends PlaybackServiceFragment implements
 
     private ArrayList<MediaWrapper> mMediaList;
     private String mTitle;
+
+    private FloatingActionButton mPlayShuffleAll;
+    private FloatingActionButton mPlayAll;
 
     /* All subclasses of Fragment must include a public empty constructor. */
     public AudioAlbumsSongsFragment() { }
@@ -155,6 +160,25 @@ public class AudioAlbumsSongsFragment extends PlaybackServiceFragment implements
         albumsList.setOnScrollListener(mScrollListener);
 
         getActivity().setTitle(mTitle);
+
+
+        mPlayShuffleAll = (FloatingActionButton)v.findViewById(R.id.albums_song_play_rand);
+        mPlayShuffleAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onPlayAllClick(v, true);
+            }
+        });
+        mPlayAll = (FloatingActionButton)v.findViewById(R.id.albums_song_play);
+        mPlayAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onPlayAllClick(v, false);
+            }
+        });
+
+
+
         return v;
     }
 
@@ -414,5 +438,33 @@ public class AudioAlbumsSongsFragment extends PlaybackServiceFragment implements
                 updateList();
             }
         });
+    }
+
+    public void onPlayAllClick(View view, boolean shuffle) {
+        List<MediaWrapper> medias = new LinkedList<MediaWrapper>();
+        AudioBrowserListAdapter adapter;
+        if (mViewPager.getCurrentItem() == MODE_SONG) {
+            adapter = mSongsAdapter;
+        }else if (mViewPager.getCurrentItem() == MODE_ALBUM) {
+            adapter = mAlbumsAdapter;
+
+        }else{
+            return;
+        }
+        adapter.getListWithPosition(medias, 0);
+
+        if (adapter.getCount() > 0) {
+            //Random rand = new Random();
+            //int randomSong = rand.nextInt(mSongsAdapter.getCount());
+            if (mService != null) {
+                //mService.load(medias, randomSong);
+                if (shuffle)
+                    mService.shuffleAndLoad(medias);
+                else
+                    mService.load(medias, 0);
+                //mService.shuffle();
+                mService.play();
+            }
+        }
     }
 }

@@ -90,6 +90,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -1626,6 +1627,19 @@ public class PlaybackService extends Service implements IVLCVout.Callback {
     @MainThread
     public void loadLocation(String mediaPath) {
         loadLocations(Collections.singletonList(mediaPath), 0);
+    }
+
+    @MainThread
+    public void shuffleAndLoad(List<MediaWrapper> list){
+        List<MediaWrapper> res = new LinkedList<>();
+        Random rand = new Random();
+        while(list.size() > 0) {
+            int ind = rand.nextInt(list.size());
+            res.add(list.get(ind));
+            list.remove(ind);
+        }
+
+        load(res, 0);
     }
 
     @MainThread
