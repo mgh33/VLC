@@ -1,5 +1,8 @@
 package com.mgh.vlc;
 
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.Application;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -7,11 +10,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
 import org.videolan.vlc.BuildConfig;
 import org.videolan.vlc.PlaybackService;
+import org.videolan.vlc.VLCApplication;
+import org.videolan.vlc.util.VLCInstance;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MtcAdapterService extends Service {
 
@@ -23,16 +32,16 @@ public class MtcAdapterService extends Service {
     protected BroadcastReceiver mtcReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
 
-            Log.v(TAG, "receive");
+            //Log.v(TAG, "receive");
             if (service == null) return;
 
             String action = intent.getAction();
 
             if (action.equals("com.microntek.bootcheck")) {
                 String pkname = intent.getStringExtra("class");
+                Log.v(TAG, "receive bootcheck: " + pkname);
                 if (!pkname.equals(BuildConfig.APPLICATION_ID) && !pkname.equals("phonecallin") && !pkname.equals("phonecallout")) {
-                    service.stop();
-                    stopSelf();
+                    closeApp();
                 }
 
             } else if (action.equals("com.microntek.playmusic")) {
@@ -186,10 +195,46 @@ public class MtcAdapterService extends Service {
         public void onServiceDisconnected(ComponentName name) {
             Log.v(TAG, "service disconnected!");
             service = null;
-            stopSelf();
+            closeApp();
         }
 
+    };
 
+    private List<Activity> activities = new ArrayList<>();
+
+    Application.ActivityLifecycleCallbacks callback = new Application.ActivityLifecycleCallbacks() {
+        @Override
+        public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+            Log.v(TAG, "new activity: " + activity.getLocalClassName());
+            activities.add(activity);
+        }
+
+        @Override
+        public void onActivityStarted(Activity activity) {
+        }
+
+        @Override
+        public void onActivityResumed(Activity activity) {
+        }
+
+        @Override
+        public void onActivityPaused(Activity activity) {
+        }
+
+        @Override
+        public void onActivityStopped(Activity activity) {
+        }
+
+        @Override
+        public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+
+        }
+
+        @Override
+        public void onActivityDestroyed(Activity activity) {
+            Log.v(TAG, "remove activity: " + activity.getLocalClassName());
+            activities.remove(activity);
+        }
     };
 
 
@@ -197,17 +242,12 @@ public class MtcAdapterService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        Log.v(TAG, "start vlc service!!");
-
-
         try {
             if (service == null)
                 bindService(new Intent(this, PlaybackService.class), mServiceConnection, BIND_AUTO_CREATE);
         } catch (Throwable e){
             Log.e(TAG, "error on binding to PlayBackService", e);
         }
-
-        Log.v(TAG, "after bindservice");
 
         IntentFilter filter = new IntentFilter();
         filter.addAction("com.microntek.playmusic");
@@ -220,8 +260,29 @@ public class MtcAdapterService extends Service {
         filter.addAction("com.microntek.bootcheck");
         registerReceiver(this.mtcReceiver, filter);
 
-        Log.v(TAG, "end oncreate");
+        VLCApplication inst = (VLCApplication) VLCApplication.getAppContext();
+        inst.registerActivityLifecycleCallbacks(callback);
+    }
 
+    private void closeApp(){
+        if (service != null)
+            service.stop();
+
+        Log.v(TAG, "closing app");
+        VLCApplication inst = (VLCApplication) VLCApplication.getAppContext();
+        inst.unregisterActivityLifecycleCallbacks(callback);
+
+        for (Activity act : activities){
+
+            try{
+                act.finish();
+            }catch (Throwable e){
+                Log.w(TAG, "error on closing vlc", e);
+            }
+
+        }
+
+        stopSelf();
     }
 
     @Override
