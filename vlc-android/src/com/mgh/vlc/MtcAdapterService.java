@@ -11,9 +11,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 
+import org.videolan.libvlc.Media;
+import org.videolan.libvlc.MediaPlayer;
 import org.videolan.vlc.BuildConfig;
 import org.videolan.vlc.PlaybackService;
 import org.videolan.vlc.VLCApplication;
@@ -189,6 +193,30 @@ public class MtcAdapterService extends Service {
         public void onServiceConnected(ComponentName name, IBinder iBinder) {
             Log.v(TAG, "service bound!");
             service = PlaybackService.getService(iBinder);
+
+            service.addCallback(new PlaybackService.Callback() {
+                @Override
+                public void update() {
+                    Log.v(TAG, "callback update");
+                    updateKLD(-1);
+                }
+
+                @Override
+                public void updateProgress() {
+                    Log.v(TAG, "callback updateProgress");
+                    updateKLD(service.getTime());
+                }
+
+                @Override
+                public void onMediaEvent(Media.Event event) {
+                    Log.v(TAG, "callback media.event " + event);
+                }
+
+                @Override
+                public void onMediaPlayerEvent(MediaPlayer.Event event) {
+                    Log.v(TAG, "callback mediaplayer.event " + event);
+                }
+            });
         }
 
         @Override
@@ -237,6 +265,33 @@ public class MtcAdapterService extends Service {
         }
     };
 
+/*    private Handler currentPlaybackUpdateHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+
+            updateKLD(service.getTime());
+
+            // check every second for changes
+            this.sendEmptyMessageDelayed(0, 1000);
+
+            msg.recycle();
+        }
+    };
+*/
+
+    private void updateKLD(long pos){
+        Intent intent = new Intent("com.mgh.mghlibs.MghService.SEND_KLD");
+        intent.putExtra("com.mgh.mghlibs.MghService.SEND_STR", "VLC");
+
+        if (service != null) {
+            if (service.isPlaying() || service.hasMedia()) {
+                intent.putExtra("com.mgh.mghlibs.MghService.SEND_TIME", pos);
+            }
+        }
+
+        sendBroadcast(intent);
+    }
 
     @Override
     public void onCreate() {
@@ -262,6 +317,10 @@ public class MtcAdapterService extends Service {
 
         VLCApplication inst = (VLCApplication) VLCApplication.getAppContext();
         inst.registerActivityLifecycleCallbacks(callback);
+
+        updateKLD(-1);
+
+        //currentPlaybackUpdateHandler.sendEmptyMessageDelayed(0,1000);
     }
 
     private void closeApp(){

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import org.videolan.vlc.BuildConfig;
+import org.videolan.vlc.PlaybackService;
 
 
 public class StartActivity extends org.videolan.vlc.StartActivity {
@@ -14,6 +15,8 @@ public class StartActivity extends org.videolan.vlc.StartActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
 
         try {
             Intent it1 = new Intent("com.microntek.bootcheck");
@@ -29,6 +32,11 @@ public class StartActivity extends org.videolan.vlc.StartActivity {
         }catch(Throwable e){
             Log.e(TAG, "error on starting service", e);
         }
+
+        // automatically start playback
+        Intent intent = new Intent(this, PlaybackService.class);
+        intent.setAction(PlaybackService.ACTION_REMOTE_PLAY);
+        startService(intent);
 
         super.onCreate(savedInstanceState);
 
