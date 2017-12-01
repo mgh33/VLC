@@ -7,7 +7,7 @@
         android:minSdkVersion="19" />
 
     <application
-        android:name="org.videolan.vlc.VLCApplication" >
+        android:name="com.mgh.vlc.VLCApplication" >
         <activity
             android:name="com.mgh.vlc.StartActivity"
             tools:node="replace">

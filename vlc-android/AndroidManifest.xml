@@ -72,7 +72,7 @@
     <android:uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
-        android:name=".VLCApplication"
+        android:name="com.mgh.vlc.VLCApplication"
         android:allowBackup="true"
         android:banner="@drawable/banner"
         android:hardwareAccelerated="true"

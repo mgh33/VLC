@@ -1,8 +1,5 @@
 package com.mgh.vlc;
 
-import android.app.Activity;
-import android.app.ActivityManager;
-import android.app.Application;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -10,21 +7,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.util.Log;
 
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
 import org.videolan.vlc.BuildConfig;
 import org.videolan.vlc.PlaybackService;
-import org.videolan.vlc.VLCApplication;
-import org.videolan.vlc.util.VLCInstance;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MtcAdapterService extends Service {
 
@@ -197,24 +186,26 @@ public class MtcAdapterService extends Service {
             service.addCallback(new PlaybackService.Callback() {
                 @Override
                 public void update() {
-                    Log.v(TAG, "callback update");
+                    //Log.v(TAG, "lifecycleCallback update");
                     updateKLD(-1);
                 }
 
                 @Override
                 public void updateProgress() {
-                    Log.v(TAG, "callback updateProgress");
+                    //Log.v(TAG, "lifecycleCallback updateProgress");
+                    if (service == null)
+                        return;
                     updateKLD(service.getTime());
                 }
 
                 @Override
                 public void onMediaEvent(Media.Event event) {
-                    Log.v(TAG, "callback media.event " + event);
+                    //Log.v(TAG, "lifecycleCallback media.event " + event);
                 }
 
                 @Override
                 public void onMediaPlayerEvent(MediaPlayer.Event event) {
-                    Log.v(TAG, "callback mediaplayer.event " + event);
+                    //Log.v(TAG, "lifecycleCallback mediaplayer.event " + event);
                 }
             });
         }
@@ -223,62 +214,29 @@ public class MtcAdapterService extends Service {
         public void onServiceDisconnected(ComponentName name) {
             Log.v(TAG, "service disconnected!");
             service = null;
-            closeApp();
         }
 
     };
 
-    private List<Activity> activities = new ArrayList<>();
+    private void closeApp(){
+        if (service != null) {
+            service.stop();
+            unbindService(mServiceConnection);
+        }
+        service = null;
 
-    Application.ActivityLifecycleCallbacks callback = new Application.ActivityLifecycleCallbacks() {
-        @Override
-        public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-            Log.v(TAG, "new activity: " + activity.getLocalClassName());
-            activities.add(activity);
+        Log.v(TAG, "closing app");
+
+        stopSelf();
+
+        try {
+            VLCApplication inst = (VLCApplication) VLCApplication.getAppContext();
+            inst.closeActivities();
+        } catch (Throwable e){
+            Log.e(TAG, "error on closing activities", e);
         }
 
-        @Override
-        public void onActivityStarted(Activity activity) {
-        }
-
-        @Override
-        public void onActivityResumed(Activity activity) {
-        }
-
-        @Override
-        public void onActivityPaused(Activity activity) {
-        }
-
-        @Override
-        public void onActivityStopped(Activity activity) {
-        }
-
-        @Override
-        public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-
-        }
-
-        @Override
-        public void onActivityDestroyed(Activity activity) {
-            Log.v(TAG, "remove activity: " + activity.getLocalClassName());
-            activities.remove(activity);
-        }
-    };
-
-/*    private Handler currentPlaybackUpdateHandler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-
-            updateKLD(service.getTime());
-
-            // check every second for changes
-            this.sendEmptyMessageDelayed(0, 1000);
-
-            msg.recycle();
-        }
-    };
-*/
+    }
 
     private void updateKLD(long pos){
         Intent intent = new Intent("com.mgh.mghlibs.MghService.SEND_KLD");
@@ -297,12 +255,6 @@ public class MtcAdapterService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        try {
-            if (service == null)
-                bindService(new Intent(this, PlaybackService.class), mServiceConnection, BIND_AUTO_CREATE);
-        } catch (Throwable e){
-            Log.e(TAG, "error on binding to PlayBackService", e);
-        }
 
         IntentFilter filter = new IntentFilter();
         filter.addAction("com.microntek.playmusic");
@@ -315,33 +267,23 @@ public class MtcAdapterService extends Service {
         filter.addAction("com.microntek.bootcheck");
         registerReceiver(this.mtcReceiver, filter);
 
-        VLCApplication inst = (VLCApplication) VLCApplication.getAppContext();
-        inst.registerActivityLifecycleCallbacks(callback);
 
         updateKLD(-1);
 
-        //currentPlaybackUpdateHandler.sendEmptyMessageDelayed(0,1000);
+
     }
 
-    private void closeApp(){
-        if (service != null)
-            service.stop();
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
 
-        Log.v(TAG, "closing app");
-        VLCApplication inst = (VLCApplication) VLCApplication.getAppContext();
-        inst.unregisterActivityLifecycleCallbacks(callback);
-
-        for (Activity act : activities){
-
-            try{
-                act.finish();
-            }catch (Throwable e){
-                Log.w(TAG, "error on closing vlc", e);
-            }
-
+        try {
+            if (service == null)
+                bindService(new Intent(this, PlaybackService.class), mServiceConnection, BIND_AUTO_CREATE);
+        } catch (Throwable e){
+            Log.e(TAG, "error on binding to PlayBackService", e);
         }
 
-        stopSelf();
+        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
